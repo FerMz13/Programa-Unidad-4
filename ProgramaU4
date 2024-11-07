@@ -1,0 +1,100 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Estructura para representar un bloque de memoria
+typedef struct Block {
+    int blockID;              // Identificador único del bloque
+    struct Block* next;       // Puntero al siguiente bloque en la lista
+} Block;
+
+// Estructura para representar un proceso
+typedef struct Process {
+    int processID;            // Identificador único del proceso
+    Block* allocatedBlocks;   // Lista enlazada de bloques asignados al proceso
+    struct Process* next;     // Puntero al siguiente proceso en la lista
+} Process;
+
+// Función para crear un nuevo bloque de memoria
+Block* createBlock(int blockID) {
+    Block* newBlock = (Block*)malloc(sizeof(Block)); // Reserva memoria para un nuevo bloque
+    newBlock->blockID = blockID;                     // Asigna el ID al nuevo bloque
+    newBlock->next = NULL;                           // Inicializa el siguiente bloque como NULL
+    return newBlock;                                 // Devuelve el nuevo bloque
+}
+
+// Función para crear un nuevo proceso
+Process* createProcess(int processID) {
+    Process* newProcess = (Process*)malloc(sizeof(Process)); // Reserva memoria para un nuevo proceso
+    newProcess->processID = processID;                       // Asigna el ID al nuevo proceso
+    newProcess->allocatedBlocks = NULL;                      // Inicializa la lista de bloques asignados como NULL
+    newProcess->next = NULL;                                 // Inicializa el siguiente proceso como NULL
+    return newProcess;                                       // Devuelve el nuevo proceso
+}
+
+// Función para asignar un bloque a un proceso
+void assignBlock(Process* process, int blockID) {
+    Block* newBlock = createBlock(blockID);       // Crea un nuevo bloque con el ID especificado
+    newBlock->next = process->allocatedBlocks;    // Conecta el nuevo bloque al inicio de la lista de bloques del proceso
+    process->allocatedBlocks = newBlock;          // Actualiza la lista de bloques del proceso con el nuevo bloque
+    printf("Bloque %d asignado al proceso %d\n", blockID, process->processID); // Muestra mensaje de asignación
+}
+
+// Función para liberar todos los bloques asignados a un proceso
+void freeBlocks(Process* process) {
+    Block* current = process->allocatedBlocks;    // Apunta al primer bloque asignado al proceso
+    while (current != NULL) {                     // Recorre todos los bloques asignados
+        Block* temp = current;                    // Almacena el bloque actual en un temporal
+        current = current->next;                  // Avanza al siguiente bloque
+        printf("Bloque %d liberado del proceso %d\n", temp->blockID, process->processID); // Mensaje de liberación
+        free(temp);                               // Libera el bloque actual
+    }
+    process->allocatedBlocks = NULL;              // Establece la lista de bloques del proceso como NULL
+}
+
+// Función para imprimir la asignación de bloques de memoria para cada proceso
+void printAllocation(Process* processList) {
+    Process* currentProcess = processList;        // Apunta al primer proceso en la lista
+    while (currentProcess != NULL) {              // Recorre todos los procesos
+        printf("Proceso %d: ", currentProcess->processID); // Imprime el ID del proceso
+        Block* currentBlock = currentProcess->allocatedBlocks; // Apunta al primer bloque del proceso
+        while (currentBlock != NULL) {            // Recorre todos los bloques asignados al proceso
+            printf("Bloque %d -> ", currentBlock->blockID); // Imprime el ID del bloque
+            currentBlock = currentBlock->next;    // Avanza al siguiente bloque
+        }
+        printf("NULL\n");                         // Indica el final de la lista de bloques
+        currentProcess = currentProcess->next;    // Avanza al siguiente proceso
+    }
+}
+
+int main() {
+    // Crear dos procesos y agregarlos a la lista de procesos
+    Process* process1 = createProcess(1); // Crea proceso con ID 1
+    Process* process2 = createProcess(2); // Crea proceso con ID 2
+
+    // Asignar bloques a cada proceso
+    assignBlock(process1, 101);           // Asigna el bloque 101 al proceso 1
+    assignBlock(process1, 102);           // Asigna el bloque 102 al proceso 1
+    assignBlock(process2, 201);           // Asigna el bloque 201 al proceso 2
+    assignBlock(process2, 202);           // Asigna el bloque 202 al proceso 2
+
+    // Mostrar la asignación actual de bloques para cada proceso
+    printf("\nAsignación de bloques:\n");
+    printAllocation(process1);            // Imprime la asignación del proceso 1
+    printAllocation(process2);            // Imprime la asignación del proceso 2
+
+    // Liberar todos los bloques asignados al proceso 1
+    printf("\nLiberando bloques del proceso 1:\n");
+    freeBlocks(process1);                 // Libera los bloques del proceso 1
+
+    // Mostrar asignación después de liberar los bloques del proceso 1
+    printf("\nAsignación después de liberar:\n");
+    printAllocation(process1);            // Imprime la asignación actualizada del proceso 1
+    printAllocation(process2);            // Imprime la asignación actualizada del proceso 2
+
+    // Liberar todos los bloques asignados al proceso 2 y liberar memoria de procesos
+    freeBlocks(process2);                 // Libera los bloques del proceso 2
+    free(process1);                       // Libera la memoria del proceso 1
+    free(process2);                       // Libera la memoria del proceso 2
+
+    return 0;                             // Termina el programa
+}
